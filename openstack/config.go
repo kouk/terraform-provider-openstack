@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -257,10 +258,14 @@ func (c *Config) imageV2Client(region string) (*gophercloud.ServiceClient, error
 }
 
 func (c *Config) networkingV2Client(region string) (*gophercloud.ServiceClient, error) {
-	return openstack.NewNetworkV2(c.OsClient, gophercloud.EndpointOpts{
+	sc, err := openstack.NewNetworkV2(c.OsClient, gophercloud.EndpointOpts{
 		Region:       c.determineRegion(region),
 		Availability: c.getEndpointType(),
 	})
+	if err == nil && strings.Contains(sc.Endpoint, "rackspacecloud") {
+		sc.ResourceBase = sc.Endpoint
+	}
+	return sc, err
 }
 
 func (c *Config) objectStorageV1Client(region string) (*gophercloud.ServiceClient, error) {
